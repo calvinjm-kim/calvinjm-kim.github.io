@@ -1,6 +1,6 @@
 import 'package:dart_openai/dart_openai.dart';
 
-final _openAIKey = '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';
+final _openAIKey = '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';
 final _openAIModel = 'gpt-3.5-turbo-16k';
 
 Future<String> handleChatCompletion(String command, String baseData) async {
