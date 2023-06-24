@@ -1,6 +1,6 @@
 import 'package:dart_openai/dart_openai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-final _openAIKey = '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';
 final _openAIModel = 'gpt-3.5-turbo-16k';
 
 Future<String> handleChatCompletion(String command, String baseData) async {
@@ -11,7 +11,7 @@ Future<String> handleChatCompletion(String command, String baseData) async {
   await Future.delayed(Duration(seconds: 3));
 
   // Set the key
-  OpenAI.apiKey = _openAIKey;
+  OpenAI.apiKey = dotenv.get('OPENAI_KEY', fallback: 'NOKEYEXIST');
 
   // Call the api
   final OpenAIChatCompletionModel chatResult;
