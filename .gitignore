@@ -9,6 +9,7 @@
 .buildlog/
 .history
 .svn/
+migrate_working_dir/
 
 # IntelliJ related
 *.iml
@@ -31,8 +32,6 @@
 .pub-cache/
 .pub/
 /build/
-
-# Web related
 
 # Symbolication related
 app.*.symbols
