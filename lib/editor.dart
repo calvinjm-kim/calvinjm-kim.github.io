@@ -115,8 +115,8 @@ class _EditorState extends State<Editor> {
           height: 500,
           child: QuillHtmlEditor(
             controller: _controller,
-            text: "<h1>Hello</h1>This is a quill html editor example 😊",
-            hintText: 'Hint text goes here',
+            text: "<h1>안녕하세요.</h1>이것은 <b>AI Assistant</b> 예제입니다 😊<br><br>우측 커맨드 창을 통해 생성해 보세요.",
+            hintText: '드래그로 AI에게 전달할 내용을 선택할 수 있습니다.',
             isEnabled: true,
             minHeight: 500,
             textStyle: _editorTextStyle,
@@ -325,7 +325,8 @@ class _EditorState extends State<Editor> {
 
     // Process the prompt
     String result = await openai.handleChatCompletion(command, baseData);
-    ChatMessage msgResult = ChatMessage(isAnswer: true, text: result);
+    String converted = result.replaceAll('\n', '<br>');
+    ChatMessage msgResult = ChatMessage(isAnswer: true, text: converted);
     setState(() {
       _messages.insert(0, msgResult);
     });
