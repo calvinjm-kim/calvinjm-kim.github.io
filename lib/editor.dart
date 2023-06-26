@@ -1,11 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:quill_html_editor/quill_html_editor.dart';
 import 'package:translator/translator.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'openai.dart' as openai;
 
 late QuillEditorController _controller;
+double _panelSizeLeft = 200;
+double _panelSizeRight = 200;
+double _panelHeight = 400;
 
 class Editor extends StatefulWidget {
   @override
@@ -29,13 +31,13 @@ class _EditorState extends State<Editor> {
   final _backgroundColor = Colors.white70;
   final _toolbarIconColor = Colors.black87;
   final _editorTextStyle = const TextStyle(
-      fontSize: 18, color: Colors.black, fontWeight: FontWeight.normal);
+      fontSize: 16, color: Colors.black, fontWeight: FontWeight.normal);
   final _hintTextStyle = const TextStyle(
-      fontSize: 18, color: Colors.black12, fontWeight: FontWeight.normal);
-
-  final TextEditingController _commandInputController = TextEditingController();
+      fontSize: 16, color: Colors.black12, fontWeight: FontWeight.normal);
 
   final List<ChatMessage> _messages = <ChatMessage>[];
+
+  final TextEditingController _commandInputController = TextEditingController();
 
   bool _bSelectedText = false;
   bool _bUseMainText = false;
@@ -56,6 +58,7 @@ class _EditorState extends State<Editor> {
         });
       }
     });
+
     super.initState();
   }
 
@@ -75,16 +78,23 @@ class _EditorState extends State<Editor> {
   }
 
   Widget getMainLayout() {
+    // Get the screen size
+    double screenWidth = MediaQuery.of(context).size.width;
+    _panelHeight = MediaQuery.of(context).size.height - 30;
+    _panelSizeLeft = screenWidth/2 + 40;
+    _panelSizeRight = screenWidth - _panelSizeLeft;
+
+    // Return the layout
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          fit: FlexFit.tight,
-          child: getLeftView(),
-        ),
-        Padding(padding: EdgeInsets.only(right: 10)),
         SizedBox(
-          width: 400,
+          width: _panelSizeLeft,
+          child: getLeftView(),
+        ),       
+        //const VerticalDivider(),
+        SizedBox(
+          width: _panelSizeRight,
           height: 540,
           child: getRightView(),
         ),
@@ -93,7 +103,8 @@ class _EditorState extends State<Editor> {
   }
 
   Widget getLeftView() {
-    return Column(
+    return SingleChildScrollView(
+      child: Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,11 +123,11 @@ class _EditorState extends State<Editor> {
           ),
         ),
         SizedBox(
-          height: 500,
+          height: _panelHeight - 40,
           child: QuillHtmlEditor(
             controller: _controller,
-            text: "<h1>안녕하세요.</h1>이것은 <b>AI Assistant</b> 예제입니다 😊<br><br>우측 커맨드 창을 통해 생성해 보세요.",
-            hintText: '드래그로 AI에게 전달할 내용을 선택할 수 있습니다.',
+            text: "<h1>안녕하세요.</h1>이것은 <b>AI Assistant</b> 예제입니다 😊<br><br>우측 커맨드 창을 통해 이메일 내용을 생성해 보세요.",
+            hintText: '(본문을 드래그해서 AI에게 전달할 내용을 선택할 수 있습니다.)',
             isEnabled: true,
             minHeight: 500,
             textStyle: _editorTextStyle,
@@ -151,6 +162,7 @@ class _EditorState extends State<Editor> {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -160,18 +172,24 @@ class _EditorState extends State<Editor> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Flexible(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(8.0),
-            reverse: true,
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              if (index >= 0 && index < _messages.length) {
-                return _messages[index];
-              }
+          child: GestureDetector(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              reverse: true,
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                if (index >= 0 && index < _messages.length) {
+                  return _messages[index];
+                }
+              },
+            ),
+            onTap: () {
+              _controller.unFocus();
+              _focusPrompt.unfocus();
             },
           ),
         ),
-        Divider(height: 1.0),
+        const Divider(height: 1.0),
         getCommandInput(),
       ],
     );
@@ -186,7 +204,7 @@ class _EditorState extends State<Editor> {
           child: getSelectionButton(),
         ),
         SizedBox(
-          width: 320,
+          width: _panelSizeRight - 80,
           height: 80,
           child: Container(
             padding: const EdgeInsets.all(8),
@@ -325,8 +343,7 @@ class _EditorState extends State<Editor> {
 
     // Process the prompt
     String result = await openai.handleChatCompletion(command, baseData);
-    String converted = result.replaceAll('\n', '<br>');
-    ChatMessage msgResult = ChatMessage(isAnswer: true, text: converted);
+    ChatMessage msgResult = ChatMessage(isAnswer: true, text: result);
     setState(() {
       _messages.insert(0, msgResult);
     });
@@ -349,7 +366,7 @@ class ChatMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int maxLines = 30;
-    double boxSize = 230;
+    double boxSize = _panelSizeRight - 80;
     double boxPadding = 10;
     double boxMarginHeight = 10;
     double boxMarginWidth = 10;
@@ -397,7 +414,8 @@ class ChatMessage extends StatelessWidget {
           ),
           onTap: () {
             if (isAnswer) {
-              _controller.insertText(text);
+              String converted = text.replaceAll('\n', '<br>');
+              _controller.insertText(converted);
             }
           },
         ),
